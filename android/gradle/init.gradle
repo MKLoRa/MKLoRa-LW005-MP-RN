@@ -1,0 +1,16 @@
+// Applied via gradlew --init-script (see gradlew). Adds stable mirrors before Maven Central / Google.
+def mirrorRepos = { RepositoryHandler repos ->
+    repos.maven { url 'https://maven.aliyun.com/repository/public' }
+    repos.maven { url 'https://maven.aliyun.com/repository/google' }
+    repos.maven { url 'https://maven.aliyun.com/repository/gradle-plugin' }
+    repos.google()
+    repos.mavenCentral()
+    repos.gradlePluginPortal()
+}
+
+allprojects {
+    buildscript {
+        repositories { mirrorRepos(repositories) }
+    }
+    repositories { mirrorRepos(repositories) }
+}

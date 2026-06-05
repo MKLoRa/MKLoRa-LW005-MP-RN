@@ -8,6 +8,8 @@ type PickedFirmwareFile = {
 type MPNativeModule = {
   listDocumentFiles: () => Promise<string[]>;
   getDocumentsDirectory: () => Promise<string>;
+  writeDebuggerLogFile?: (fileName: string, content: string) => Promise<string>;
+  shareFiles?: (paths: string[]) => Promise<boolean>;
   pickFirmwareFile?: () => Promise<PickedFirmwareFile>;
   startDFU: (deviceId: string, fileName: string) => void;
   cancelDFU?: () => void;
@@ -77,6 +79,23 @@ export async function getDocumentsDirectory(): Promise<string> {
     return '';
   }
   return Native.getDocumentsDirectory();
+}
+
+export async function writeDebuggerLogFile(
+  fileName: string,
+  content: string,
+): Promise<string> {
+  if (!Native?.writeDebuggerLogFile) {
+    throw new Error('writeDebuggerLogFile is not available');
+  }
+  return Native.writeDebuggerLogFile(fileName, content);
+}
+
+export async function shareFiles(paths: string[]): Promise<boolean> {
+  if (!Native?.shareFiles) {
+    throw new Error('shareFiles is not available');
+  }
+  return Native.shareFiles(paths);
 }
 
 export function startNativeDFU(

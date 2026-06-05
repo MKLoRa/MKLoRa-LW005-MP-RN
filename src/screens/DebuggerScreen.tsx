@@ -6,7 +6,6 @@ import {
   FlatList,
   Linking,
   Pressable,
-  Share,
   StyleSheet,
   Text,
   View,
@@ -32,6 +31,10 @@ import {
 import {showToast} from '../utils/toast';
 import {useTabBackToScan} from '../hooks/useTabBackToScan';
 import {RootStackParamList} from '../types/navigation';
+import {
+  exportSelectedDebuggerLogs,
+  isDebuggerLogExportAvailable,
+} from '../utils/debuggerLogExport';
 
 type Nav = NativeStackNavigationProp<RootStackParamList, 'Debugger'>;
 type Route = RouteProp<RootStackParamList, 'Debugger'>;
@@ -273,20 +276,26 @@ const DebuggerScreen: React.FC<{route: Route}> = ({route}) => {
       return;
     }
     const selected = logs.filter(l => l.selected);
-    const body = selected
-      .map(
-        item =>
-          `--- ${macAddress} ${item.date} ---\n${item.logDetails}\n`,
-      )
-      .join('\n');
+    if (!isDebuggerLogExportAvailable()) {
+      showToast('Export is not available');
+      return;
+    }
+    setBusy(true);
     try {
-      await Share.share({
-        message: body,
-        title: 'Debugger logs',
-      });
+      await exportSelectedDebuggerLogs(macAddress, selected);
       showToast('Export ready');
-    } catch {
-      showToast('Export cancelled');
+    } catch (e: unknown) {
+      const code =
+        e && typeof e === 'object' && 'code' in e
+          ? String((e as {code?: string}).code)
+          : '';
+      if (code === 'cancelled') {
+        showToast('Export cancelled');
+      } else {
+        showToast('Export failed');
+      }
+    } finally {
+      setBusy(false);
     }
   };
 
@@ -385,8 +394,8 @@ const DebuggerScreen: React.FC<{route: Route}> = ({route}) => {
             Linking.openURL('mailto:Development@mokotechnology.com')
           }>
           <Text style={styles.mailHint}>
-            Tap Export to share logs; you can also email
-            Development@mokotechnology.com for feedback.
+            Tap Export to share .txt log files; choose Mail to send as attachments.
+            You can also email Development@mokotechnology.com for feedback.
           </Text>
         </Pressable>
       </View>

@@ -2,6 +2,7 @@
 
 #import <CoreBluetooth/CoreBluetooth.h>
 #import <React/RCTBridge.h>
+#import <React/RCTUtils.h>
 #import "BlePlx.h"
 @import iOSDFULibrary;
 
@@ -82,6 +83,87 @@ RCT_EXPORT_METHOD(getDocumentsDirectory : (RCTPromiseResolveBlock)resolve reject
 {
   NSString *document = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES).firstObject;
   resolve(document ?: @"");
+}
+
+RCT_EXPORT_METHOD(writeDebuggerLogFile : (NSString *)fileName content : (NSString *)content resolver : (RCTPromiseResolveBlock)resolve rejecter : (RCTPromiseRejectBlock)reject)
+{
+  if (fileName.length == 0 || content.length == 0) {
+    reject(@"invalid_args", @"fileName and content required", nil);
+    return;
+  }
+  NSString *document = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES).firstObject;
+  if (document.length == 0) {
+    reject(@"write_error", @"Documents directory unavailable", nil);
+    return;
+  }
+  NSString *safeName = fileName;
+  if (![safeName hasSuffix:@".txt"]) {
+    safeName = [safeName stringByAppendingString:@".txt"];
+  }
+  NSString *filePath = [document stringByAppendingPathComponent:safeName];
+  NSError *error = nil;
+  BOOL ok = [content writeToFile:filePath atomically:YES encoding:NSUTF8StringEncoding error:&error];
+  if (!ok) {
+    reject(@"write_error", error.localizedDescription ?: @"write failed", error);
+    return;
+  }
+  resolve(filePath);
+}
+
+RCT_EXPORT_METHOD(shareFiles : (NSArray *)filePaths resolver : (RCTPromiseResolveBlock)resolve rejecter : (RCTPromiseRejectBlock)reject)
+{
+  dispatch_async(dispatch_get_main_queue(), ^{
+    if (![filePaths isKindOfClass:[NSArray class]] || filePaths.count == 0) {
+      reject(@"invalid_args", @"No files to share", nil);
+      return;
+    }
+
+    NSMutableArray *items = [NSMutableArray array];
+    for (id pathObj in filePaths) {
+      if (![pathObj isKindOfClass:[NSString class]]) {
+        continue;
+      }
+      NSString *path = (NSString *)pathObj;
+      if (path.length == 0) {
+        continue;
+      }
+      NSURL *url = [NSURL fileURLWithPath:path];
+      if (url != nil) {
+        [items addObject:url];
+      }
+    }
+    if (items.count == 0) {
+      reject(@"invalid_args", @"No valid files", nil);
+      return;
+    }
+
+    UIViewController *presenter = RCTPresentedViewController();
+    if (presenter == nil) {
+      reject(@"no_activity", @"View controller not available", nil);
+      return;
+    }
+
+    UIActivityViewController *shareController =
+      [[UIActivityViewController alloc] initWithActivityItems:items applicationActivities:nil];
+    if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad) {
+      shareController.popoverPresentationController.sourceView = presenter.view;
+      shareController.popoverPresentationController.sourceRect =
+        CGRectMake(CGRectGetMidX(presenter.view.bounds), CGRectGetMidY(presenter.view.bounds), 1, 1);
+    }
+    shareController.completionWithItemsHandler =
+      ^(UIActivityType activityType, BOOL completed, NSArray *returnedItems, NSError *activityError) {
+        if (activityError != nil) {
+          reject(@"share_error", activityError.localizedDescription, activityError);
+          return;
+        }
+        if (!completed) {
+          reject(@"cancelled", @"User cancelled", nil);
+          return;
+        }
+        resolve(@(YES));
+      };
+    [presenter presentViewController:shareController animated:YES completion:nil];
+  });
 }
 
 RCT_EXPORT_METHOD(startDFU : (NSString *)deviceId fileName : (NSString *)fileName)

@@ -13,6 +13,7 @@ import android.provider.OpenableColumns;
 import android.util.Log;
 
 import androidx.annotation.Nullable;
+import androidx.core.content.FileProvider;
 
 import com.facebook.react.bridge.ActivityEventListener;
 import com.facebook.react.bridge.Arguments;
@@ -21,6 +22,7 @@ import com.facebook.react.bridge.Promise;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
+import com.facebook.react.bridge.ReadableArray;
 import com.facebook.react.bridge.WritableArray;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
@@ -29,6 +31,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -172,6 +175,67 @@ public class MPNativeModule extends ReactContextBaseJavaModule
       dir = reactContext.getFilesDir();
     }
     promise.resolve(dir.getAbsolutePath());
+  }
+
+  @ReactMethod
+  public void writeDebuggerLogFile(String fileName, String content, Promise promise) {
+    try {
+      String safeName = sanitizeLogFileName(fileName);
+      File file = new File(reactContext.getFilesDir(), safeName);
+      try (FileOutputStream out = new FileOutputStream(file, false)) {
+        out.write(content.getBytes(StandardCharsets.UTF_8));
+        out.flush();
+      }
+      promise.resolve(file.getAbsolutePath());
+    } catch (Exception e) {
+      promise.reject("write_error", e.getMessage(), e);
+    }
+  }
+
+  @ReactMethod
+  public void shareFiles(ReadableArray filePaths, Promise promise) {
+    Activity activity = reactContext.getCurrentActivity();
+    if (activity == null) {
+      promise.reject("no_activity", "Activity not available");
+      return;
+    }
+    try {
+      ArrayList<Uri> uris = new ArrayList<>();
+      for (int i = 0; i < filePaths.size(); i++) {
+        String path = filePaths.getString(i);
+        if (path == null || path.trim().isEmpty()) {
+          continue;
+        }
+        File file = new File(path);
+        if (!file.isFile()) {
+          continue;
+        }
+        Uri uri =
+            FileProvider.getUriForFile(
+                reactContext, reactContext.getPackageName() + ".fileprovider", file);
+        uris.add(uri);
+      }
+      if (uris.isEmpty()) {
+        promise.reject("invalid_args", "No valid files");
+        return;
+      }
+
+      Intent intent;
+      if (uris.size() == 1) {
+        intent = new Intent(Intent.ACTION_SEND);
+        intent.setType("text/plain");
+        intent.putExtra(Intent.EXTRA_STREAM, uris.get(0));
+      } else {
+        intent = new Intent(Intent.ACTION_SEND_MULTIPLE);
+        intent.setType("text/plain");
+        intent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, uris);
+      }
+      intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+      activity.startActivity(Intent.createChooser(intent, "Share logs"));
+      promise.resolve(true);
+    } catch (Exception e) {
+      promise.reject("share_error", e.getMessage(), e);
+    }
   }
 
   @ReactMethod
@@ -435,5 +499,16 @@ public class MPNativeModule extends ReactContextBaseJavaModule
     WritableMap map = Arguments.createMap();
     map.putString("message", message);
     sendEvent(EVENT_ERROR, map);
+  }
+
+  private static String sanitizeLogFileName(@Nullable String fileName) {
+    if (fileName == null || fileName.trim().isEmpty()) {
+      return "debugger.log.txt";
+    }
+    String safe = fileName.replaceAll("[/\\\\?%*|\"<> ]+", "-");
+    if (!safe.toLowerCase(Locale.US).endsWith(".txt")) {
+      safe = safe + ".txt";
+    }
+    return safe;
   }
 }

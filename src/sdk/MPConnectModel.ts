@@ -2,9 +2,11 @@
  * MPConnectModel — 连接 + 时间同步（对齐 iOS ConnectModule）
  */
 
+import {Platform} from 'react-native';
 import MPCentralManager from './MPCentralManager';
 import MPInterfaceConfig from './MPInterfaceConfig';
 import {ScannedDeviceModel} from './MPSDKDefines';
+import {waitForBleReady} from '../utils/mpApi';
 import {clearDebuggerLogs} from '../utils/debuggerLogStorage';
 import {
   clearConnectedMacAddress,
@@ -100,15 +102,29 @@ class MPConnectModel {
     clearConnectedMacAddress();
   }
 
-  private configDate(): Promise<boolean> {
+  private async configDate(): Promise<boolean> {
+    if (!(await waitForBleReady())) {
+      return false;
+    }
     const timestamp = Math.floor(Date.now() / 1000);
-    return new Promise(resolve => {
-      MPInterfaceConfig.config_device_time(
-        timestamp,
-        () => resolve(true),
-        () => resolve(false),
-      );
-    });
+    for (let attempt = 0; attempt < 3; attempt++) {
+      if (attempt > 0) {
+        await new Promise<void>(r =>
+          setTimeout(r, Platform.OS === 'android' ? 400 : 200),
+        );
+      }
+      const ok = await new Promise<boolean>(resolve => {
+        MPInterfaceConfig.config_device_time(
+          timestamp,
+          () => resolve(true),
+          () => resolve(false),
+        );
+      });
+      if (ok) {
+        return true;
+      }
+    }
+    return false;
   }
 }
 

@@ -253,10 +253,9 @@ public class MPNativeModule extends ReactContextBaseJavaModule
     ensureProgressListener();
     uploadingEmitted = false;
     // 等 JS 侧 destroy ble-plx 后再启动，避免与 Nordic 争用 GATT / MTU
+    final String zipPath = file.getAbsolutePath();
     new Handler(Looper.getMainLooper())
-        .postDelayed(
-            () -> startDfuAfterBleReleased(address, file.getAbsolutePath()),
-            400);
+        .postDelayed(() -> startDfuAfterBleReleased(address, zipPath), 600);
   }
 
   private void startDfuAfterBleReleased(String address, String zipPath) {
@@ -271,8 +270,10 @@ public class MPNativeModule extends ReactContextBaseJavaModule
               .setNumberOfRetries(3)
               .setPrepareDataObjectDelay(600)
               .setRebootTime(1_000)
+              .setForceScanningForNewAddressInLegacyDfu(true)
+              .setScanTimeout(12_000)
               .setZip(zipPath);
-      Log.i(TAG, "startDFU: disableMtuRequest, mtu=0 (no 517 request)");
+      Log.i(TAG, "startDFU address=" + address + " zip=" + zipPath + " disableMtuRequest");
       dfuController = starter.start(reactContext, MPDfuService.class);
     } catch (Exception e) {
       Log.e(TAG, "startDFU failed", e);
@@ -300,7 +301,7 @@ public class MPNativeModule extends ReactContextBaseJavaModule
       }
       return sb.toString();
     }
-    return s;
+    return "";
   }
 
   @ReactMethod

@@ -25,6 +25,7 @@ import {
   startNativeDFU,
 } from '../native/MPNative';
 import {showToast} from '../utils/toast';
+import {resolveDfuBluetoothAddress} from '../utils/mpSession';
 import {useTabBackToScan} from '../hooks/useTabBackToScan';
 import {RootStackParamList} from '../types/navigation';
 
@@ -33,7 +34,7 @@ type Nav = NativeStackNavigationProp<RootStackParamList, 'Update'>;
 /** 仅在 DFU 尚未开始（无 Uploading/Progress）时生效 */
 const DFU_START_TIMEOUT_MS = 60_000;
 /** Android：destroy ble-plx 后等待控制器释放连接句柄 */
-const ANDROID_DFU_DISCONNECT_DELAY_MS = 1500;
+const ANDROID_DFU_DISCONNECT_DELAY_MS = 2000;
 
 const UpdateScreen: React.FC = () => {
   const navigation = useNavigation<Nav>();
@@ -156,7 +157,10 @@ const UpdateScreen: React.FC = () => {
       showToast('The device is disconnected.');
       return;
     }
-    const deviceId = device.id;
+    const deviceId =
+      Platform.OS === 'android'
+        ? resolveDfuBluetoothAddress(device.id)
+        : device.id;
 
     MPConnectModel.shared().setDfuInProgress(true);
     dfuStartedRef.current = true;

@@ -94,6 +94,20 @@ function shortUuid(uuid: string): string {
   return n.length >= 8 ? n.substring(4, 8) : n;
 }
 
+/** 时间同步等配置应答：parser/cmd 映射可能与当前任务不一致 */
+function isConfigAckForCurrentOp(
+  parsedOp: TaskOperationID,
+  currentOp: TaskOperationID,
+): boolean {
+  if (parsedOp === currentOp) {
+    return true;
+  }
+  return (
+    currentOp === TaskOperationID.mk_mp_taskConfigDeviceTimeOperation &&
+    parsedOp === TaskOperationID.mk_mp_taskConfigDeviceTimeOperation
+  );
+}
+
 /** MP 配置应答：1 字节 CMD → TaskOperationID */
 const CONFIG_CMD_TO_TASK: Partial<Record<string, TaskOperationID>> = {
   '01': TaskOperationID.mk_mp_taskConfigModemOperation,
@@ -222,20 +236,16 @@ class MPCentralManager {
   async teardownBleForDfu(): Promise<void> {
     this.prepareForDfuTeardown();
     this.stopScan();
+    this.stopReceiveTimer();
     await this.disconnect();
-    for (const sub of this.subscriptions) {
-      sub.remove();
-    }
-    this.subscriptions = [];
-    this.deviceDisconnectedSub = null;
-    this.passwordChar = null;
-    this.paramsChar = null;
-    this.controlChar = null;
-    this.disconnectChar = null;
     try {
       await this.manager.destroy();
     } catch {
       /* ignore */
+    }
+    // Android：destroy 后需等待系统释放 GATT 句柄，否则 Nordic DFU 易 GATT 133/超时
+    if (Platform.OS === 'android') {
+      await new Promise<void>(r => setTimeout(r, 500));
     }
     this.manager = new BleManager();
     this.attachBleStateListener();
@@ -529,6 +539,11 @@ class MPCentralManager {
   async connectPeripheral(deviceId: string, password?: string): Promise<Device> {
     this.suppressNextConnectStateAlert();
     this.stopScan();
+    this.stopReceiveTimer();
+    this.operationQueue = [];
+    this.currentOperation = null;
+    this.opFinished = true;
+    this.passwordResolve = null;
     try {
       this.connectStatus = CentralConnectStatus.Connecting;
       if (this.connectedDevice?.id !== deviceId) {
@@ -538,6 +553,14 @@ class MPCentralManager {
         timeout: 15000,
       });
       await this.connectedDevice.discoverAllServicesAndCharacteristics();
+      if (Platform.OS === 'android') {
+        try {
+          await this.connectedDevice.requestMTU(247);
+        } catch {
+          /* ignore */
+        }
+        await new Promise<void>(r => setTimeout(r, 150));
+      }
       await this.setupCharacteristics();
 
       if (password && password.length === 8) {
@@ -547,7 +570,14 @@ class MPCentralManager {
         }
       }
 
+      // Android：密码 AA00 应答与 AA03 首条控制命令之间需间隔，否则时间同步 notify 易丢
+      if (Platform.OS === 'android') {
+        await new Promise<void>(r => setTimeout(r, 500));
+      }
+
       this.connectStatus = CentralConnectStatus.Connected;
+      this.clearDisconnectTypeNotified();
+      this.suppressConnectStateAlert = false;
       this.attachDeviceDisconnectMonitor(this.connectedDevice);
       return this.connectedDevice;
     } catch (e) {
@@ -637,6 +667,26 @@ class MPCentralManager {
 
     const operationID = this.resolveNotifyOperationId(parsed, data);
 
+    if (
+      this.currentOperation &&
+      operationID !== this.currentOperation.operationID &&
+      !('success' in parsed.result)
+    ) {
+      return;
+    }
+    if (
+      'success' in parsed.result &&
+      this.currentOperation &&
+      operationID !== this.currentOperation.operationID &&
+      isConfigAckForCurrentOp(operationID, this.currentOperation.operationID)
+    ) {
+      this.dataParserReceivedData(
+        this.currentOperation.operationID,
+        parsed.result,
+      );
+      return;
+    }
+
     if (operationID === TaskOperationID.mk_mp_connectPasswordOperation) {
       const state = parsed.result.state as string | undefined;
       const ok = state === '01';
@@ -671,6 +721,13 @@ class MPCentralManager {
       return opId;
     }
     const cmd = hex.substring(4, 6);
+    if (
+      this.currentOperation.operationID ===
+        TaskOperationID.mk_mp_taskConfigDeviceTimeOperation &&
+      cmd === '69'
+    ) {
+      return TaskOperationID.mk_mp_taskConfigDeviceTimeOperation;
+    }
     const expected = CONFIG_CMD_TO_TASK[cmd];
     if (expected === this.currentOperation.operationID) {
       return expected;

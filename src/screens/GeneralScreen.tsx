@@ -10,7 +10,16 @@ import {RootStackParamList} from '../types/navigation';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
-const GENERAL_MENU: {label: string; route: keyof RootStackParamList}[] = [
+type GeneralMenuRoute =
+  | 'SwitchSettings'
+  | 'ElectricitySettings'
+  | 'EnergySettings'
+  | 'ProtectionSettings'
+  | 'LoadStatusNotification'
+  | 'CountdownSettings'
+  | 'LEDSettings';
+
+const GENERAL_MENU: {label: string; route: GeneralMenuRoute}[] = [
   {label: 'Switch Control', route: 'SwitchSettings'},
   {label: 'Electricity Settings', route: 'ElectricitySettings'},
   {label: 'Energy Settings', route: 'EnergySettings'},

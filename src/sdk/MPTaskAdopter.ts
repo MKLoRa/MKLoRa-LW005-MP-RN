@@ -53,14 +53,18 @@ function parseCustomData(readData: Uint8Array): TaskParseResult {
     return {};
   }
   const dataLen = getDecimalWithHex(readString, 6, 2);
-  if (readData.length !== dataLen + 4) {
+  const frameLen = dataLen + 4;
+  // Android notify 可能附带 padding，取前 frameLen 字节（对齐 SB/MKSBTaskAdopter）
+  if (readData.length < frameLen) {
     return {};
   }
-  const flag = readString.substring(2, 4);
-  const cmd = readString.substring(4, 6);
-  const content = readString.substring(8, 8 + dataLen * 2);
+  const frame = readData.subarray(0, frameLen);
+  const frameHex = hexStringFromData(frame);
+  const flag = frameHex.substring(2, 4);
+  const cmd = frameHex.substring(4, 6);
+  const content = frameHex.substring(8, 8 + dataLen * 2);
   if (flag === '00') {
-    return parseCustomReadData(content, cmd, readData);
+    return parseCustomReadData(content, cmd, frame);
   }
   if (flag === '01') {
     return parseCustomConfigData(content, cmd);

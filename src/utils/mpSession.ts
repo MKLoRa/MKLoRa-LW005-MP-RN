@@ -13,3 +13,12 @@ export function getConnectedMacAddress(): string {
 export function clearConnectedMacAddress(): void {
   connectedMacAddress = '';
 }
+
+/** Android Nordic DFU 需要 MAC；优先用连接时缓存的广播 MAC */
+export function resolveDfuBluetoothAddress(fallbackId: string): string {
+  const mac = getConnectedMacAddress().trim();
+  if (mac) {
+    return mac;
+  }
+  return fallbackId.trim();
+}

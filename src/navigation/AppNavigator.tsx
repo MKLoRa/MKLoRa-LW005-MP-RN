@@ -14,27 +14,8 @@ import BleSettingsScreen from '../screens/BleSettingsScreen';
 import DeviceSettingScreen from '../screens/DeviceSettingScreen';
 import LoRaSettingsScreen from '../screens/LoRaSettingsScreen';
 import LoRaAppScreen from '../screens/LoRaAppScreen';
-import DownlinkScreen from '../screens/DownlinkScreen';
-import OutdoorFixScreen from '../screens/OutdoorFixScreen';
-import LCGpsFixScreen from '../screens/LCGpsFixScreen';
-import BleFixScreen from '../screens/BleFixScreen';
-import OnOffSettingsScreen from '../screens/OnOffSettingsScreen';
 import DeviceInfoScreen from '../screens/DeviceInfoScreen';
-import BatteryConsumptionScreen from '../screens/BatteryConsumptionScreen';
 import UpdateScreen from '../screens/UpdateScreen';
-import DebuggerScreen from '../screens/DebuggerScreen';
-import FilterByRawDataScreen from '../screens/FilterByRawDataScreen';
-import FilterByBeaconScreen from '../screens/FilterByBeaconScreen';
-import FilterByUIDScreen from '../screens/FilterByUIDScreen';
-import FilterByURLScreen from '../screens/FilterByURLScreen';
-import FilterByTLMScreen from '../screens/FilterByTLMScreen';
-import FilterByBXPButtonScreen from '../screens/FilterByBXPButtonScreen';
-import FilterByBXPTagScreen from '../screens/FilterByBXPTagScreen';
-import FilterByPirScreen from '../screens/FilterByPirScreen';
-import FilterByTofScreen from '../screens/FilterByTofScreen';
-import FilterByOtherScreen from '../screens/FilterByOtherScreen';
-import FilterByMacScreen from '../screens/FilterByMacScreen';
-import FilterByAdvNameScreen from '../screens/FilterByAdvNameScreen';
 import SwitchSettingsScreen from '../screens/SwitchSettingsScreen';
 import ElectricitySettingsScreen from '../screens/ElectricitySettingsScreen';
 import EnergySettingsScreen from '../screens/EnergySettingsScreen';
@@ -45,26 +26,6 @@ import CountdownSettingsScreen from '../screens/CountdownSettingsScreen';
 import LEDSettingsScreen from '../screens/LEDSettingsScreen';
 import PowerIndicatorColorScreen from '../screens/PowerIndicatorColorScreen';
 import AboutScreen from '../screens/AboutScreen';
-import DeviceModeScreen from '../screens/DeviceModeScreen';
-import StandbyModeScreen from '../screens/StandbyModeScreen';
-import PeriodicModeScreen from '../screens/PeriodicModeScreen';
-import TimingModeScreen from '../screens/TimingModeScreen';
-import MotionModeScreen from '../screens/MotionModeScreen';
-import TimeSegmentedModeScreen from '../screens/TimeSegmentedModeScreen';
-import VibrationScreen from '../screens/VibrationScreen';
-import AuxiliaryScreen from '../screens/AuxiliaryScreen';
-import AxisSettingScreen from '../screens/AxisSettingScreen';
-import AlertAlarmSettingsScreen from '../screens/AlertAlarmSettingsScreen';
-import SosAlarmSettingsScreen from '../screens/SosAlarmSettingsScreen';
-import LightMonitorSettingsScreen from '../screens/LightMonitorSettingsScreen';
-import TempMonitorSettingsScreen from '../screens/TempMonitorSettingsScreen';
-import IndicatorSettingsScreen from '../screens/IndicatorSettingsScreen';
-import LocalDataSyncScreen from '../screens/LocalDataSyncScreen';
-import ManDownScreen from '../screens/ManDownScreen';
-import TamperAlarmScreen from '../screens/TamperAlarmScreen';
-import AlarmFunctionScreen from '../screens/AlarmFunctionScreen';
-import BatteryScreen from '../screens/BatteryScreen';
-import SystemScreen from '../screens/SystemScreen';
 import {useTabBarDisconnectAlerts} from '../hooks/useTabBarDisconnectAlerts';
 import {navigationRef} from './navigationRef';
 
@@ -181,6 +142,16 @@ export default function AppNavigator() {
           options={{headerShown: false, animation: 'none'}}
         />
         <Stack.Screen
+          name="About"
+          component={AboutScreen}
+          options={{headerShown: false}}
+        />
+        <Stack.Screen
+          name="MainTabs"
+          component={MainTabs}
+          options={{headerShown: false}}
+        />
+        <Stack.Screen
           name="SwitchSettings"
           component={SwitchSettingsScreen}
           options={{headerShown: false}}
@@ -226,16 +197,6 @@ export default function AppNavigator() {
           options={{headerShown: false}}
         />
         <Stack.Screen
-          name="About"
-          component={AboutScreen}
-          options={{headerShown: false}}
-        />
-        <Stack.Screen
-          name="MainTabs"
-          component={MainTabs}
-          options={{headerShown: false}}
-        />
-        <Stack.Screen
           name="LoRaSettings"
           component={LoRaSettingsScreen}
           options={{headerShown: false}}
@@ -243,31 +204,6 @@ export default function AppNavigator() {
         <Stack.Screen
           name="LoRaApp"
           component={LoRaAppScreen}
-          options={{headerShown: false}}
-        />
-        <Stack.Screen
-          name="Downlink"
-          component={DownlinkScreen}
-          options={{headerShown: false}}
-        />
-        <Stack.Screen
-          name="OutdoorFix"
-          component={OutdoorFixScreen}
-          options={{headerShown: false}}
-        />
-        <Stack.Screen
-          name="LCGpsFix"
-          component={LCGpsFixScreen}
-          options={{headerShown: false}}
-        />
-        <Stack.Screen
-          name="BleFix"
-          component={BleFixScreen}
-          options={{headerShown: false}}
-        />
-        <Stack.Screen
-          name="OnOffSettings"
-          component={OnOffSettingsScreen}
           options={{headerShown: false}}
         />
         <Stack.Screen
@@ -281,172 +217,10 @@ export default function AppNavigator() {
           options={{headerShown: false}}
         />
         <Stack.Screen
-          name="BatteryConsumption"
-          component={BatteryConsumptionScreen}
-          options={{headerShown: false}}
-        />
-        <Stack.Screen
           name="Update"
           component={UpdateScreen}
           options={{headerShown: false}}
         />
-        <Stack.Screen
-          name="Debugger"
-          component={DebuggerScreen}
-          options={{headerShown: false}}
-        />
-        <Stack.Screen
-          name="FilterByRawData"
-          component={FilterByRawDataScreen}
-          options={{headerShown: false}}
-        />
-        <Stack.Screen
-          name="FilterByMac"
-          component={FilterByMacScreen}
-          options={{headerShown: false}}
-        />
-        <Stack.Screen
-          name="FilterByAdvName"
-          component={FilterByAdvNameScreen}
-          options={{headerShown: false}}
-        />
-        <Stack.Screen
-          name="FilterByBeacon"
-          component={FilterByBeaconScreen}
-          options={{headerShown: false}}
-        />
-        <Stack.Screen
-          name="FilterByUID"
-          component={FilterByUIDScreen}
-          options={{headerShown: false}}
-        />
-        <Stack.Screen
-          name="FilterByURL"
-          component={FilterByURLScreen}
-          options={{headerShown: false}}
-        />
-        <Stack.Screen
-          name="FilterByTLM"
-          component={FilterByTLMScreen}
-          options={{headerShown: false}}
-        />
-        <Stack.Screen
-          name="FilterByBXPButton"
-          component={FilterByBXPButtonScreen}
-          options={{headerShown: false}}
-        />
-        <Stack.Screen
-          name="FilterByBXPTag"
-          component={FilterByBXPTagScreen}
-          options={{headerShown: false}}
-        />
-        <Stack.Screen
-          name="FilterByPir"
-          component={FilterByPirScreen}
-          options={{headerShown: false}}
-        />
-        <Stack.Screen
-          name="FilterByTof"
-          component={FilterByTofScreen}
-          options={{headerShown: false}}
-        />
-        <Stack.Screen
-          name="FilterByOther"
-          component={FilterByOtherScreen}
-          options={{headerShown: false}}
-        />
-        <Stack.Screen
-          name="DeviceMode"
-          component={DeviceModeScreen}
-          options={{headerShown: false}}
-        />
-        <Stack.Screen
-          name="StandbyMode"
-          component={StandbyModeScreen}
-          options={{headerShown: false}}
-        />
-        <Stack.Screen
-          name="PeriodicMode"
-          component={PeriodicModeScreen}
-          options={{headerShown: false}}
-        />
-        <Stack.Screen
-          name="TimingMode"
-          component={TimingModeScreen}
-          options={{headerShown: false}}
-        />
-        <Stack.Screen
-          name="MotionMode"
-          component={MotionModeScreen}
-          options={{headerShown: false}}
-        />
-        <Stack.Screen
-          name="TimeSegmentedMode"
-          component={TimeSegmentedModeScreen}
-          options={{headerShown: false}}
-        />
-        <Stack.Screen
-          name="Vibration"
-          component={VibrationScreen}
-          options={{headerShown: false}}
-        />
-        <Stack.Screen
-          name="Auxiliary"
-          component={AuxiliaryScreen}
-          options={{headerShown: false}}
-        />
-        <Stack.Screen
-          name="AxisSetting"
-          component={AxisSettingScreen}
-          options={{headerShown: false}}
-        />
-        <Stack.Screen
-          name="AlertAlarmSettings"
-          component={AlertAlarmSettingsScreen}
-          options={{headerShown: false}}
-        />
-        <Stack.Screen
-          name="SosAlarmSettings"
-          component={SosAlarmSettingsScreen}
-          options={{headerShown: false}}
-        />
-        <Stack.Screen
-          name="LightMonitorSettings"
-          component={LightMonitorSettingsScreen}
-          options={{headerShown: false}}
-        />
-        <Stack.Screen
-          name="TempMonitorSettings"
-          component={TempMonitorSettingsScreen}
-          options={{headerShown: false}}
-        />
-        <Stack.Screen
-          name="IndicatorSettings"
-          component={IndicatorSettingsScreen}
-          options={{headerShown: false}}
-        />
-        <Stack.Screen
-          name="LocalDataSync"
-          component={LocalDataSyncScreen}
-          options={{headerShown: false}}
-        />
-        <Stack.Screen
-          name="ManDown"
-          component={ManDownScreen}
-          options={{headerShown: false}}
-        />
-        <Stack.Screen
-          name="TamperAlarm"
-          component={TamperAlarmScreen}
-          options={{headerShown: false}}
-        />
-        <Stack.Screen
-          name="AlarmFunction"
-          component={AlarmFunctionScreen}
-          options={{headerShown: false}}
-        />
-        <Stack.Screen name="Battery" component={BatteryScreen} />
-        <Stack.Screen name="System" component={SystemScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );
